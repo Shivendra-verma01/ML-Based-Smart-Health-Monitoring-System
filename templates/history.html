@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Health History - HealthPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    
+    <style>
+        * {
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fb;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+        
+        body.dark-mode .content-card,
+        body.dark-mode .filter-bar,
+        body.dark-mode .stats-card {
+            background: #16213e;
+            color: #ffffff;
+            border: 1px solid #2c3e50;
+        }
+        
+        body.dark-mode .table-health th {
+            background: #0f3460;
+            color: #ffffff;
+        }
+        
+        body.dark-mode .table-health td {
+            background: #16213e;
+            color: #ffffff;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode .sidebar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 1px solid #2c3e50;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link i {
+            width: 25px;
+            margin-right: 10px;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        
+        .filter-bar {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        
+        .table-health {
+            width: 100%;
+        }
+        
+        .table-health th {
+            background: #f8f9fa;
+            font-weight: 600;
+            padding: 12px;
+        }
+        
+        .critical {
+            color: #dc3545;
+            font-weight: bold;
+            background: rgba(220,53,69,0.1);
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        
+        .warning {
+            color: #fd7e14;
+            font-weight: bold;
+            background: rgba(253,126,20,0.1);
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        
+        .normal {
+            color: #198754;
+            font-weight: bold;
+            background: rgba(25,135,84,0.1);
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+        }
+        
+        .btn-filter {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+        
+        .btn-reset {
+            background: #6c757d;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+        }
+        
+        /* DataTables Customization */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 10px;
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .toast-error { background: linear-gradient(135deg, #eb3349, #f45c43); }
+        .toast-warning { background: linear-gradient(135deg, #f2994a, #f2c94c); }
+        
+        /* Loading Spinner */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.2em;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                z-index: 1000;
+            }
+            .col-md-10 {
+                margin-bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toastContainer"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 p-0">
+                <div class="sidebar p-3">
+                    <h4 class="text-center mb-4 mt-3">
+                        <i class="fas fa-heartbeat me-2"></i>HealthPro
+                    </h4>
+                    <hr class="bg-light">
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a class="nav-link active" href="/history">
+                            <i class="fas fa-history"></i> Health History
+                        </a>
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> Reports
+                        </a>
+                        <a class="nav-link" href="/goals">
+                            <i class="fas fa-bullseye"></i> Health Goals
+                        </a>
+                         <a class="nav-link" href="/batch-analyze">
+                            <i class="fas fa-database"></i> Batch ML Analyze
+                        </a>
+                        <hr class="bg-light">
+                        <a class="nav-link" href="#" onclick="toggleDarkMode()">
+                            <i class="fas fa-moon"></i> Dark Mode
+                        </a>
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                    <div>
+                        <h2><i class="fas fa-history me-2"></i>Health History</h2>
+                        <p class="text-muted mb-0">View and analyze your complete health tracking history</p>
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        <button class="export-btn me-2" onclick="exportToCSV()">
+                            <i class="fas fa-file-csv me-2"></i>Export CSV
+                        </button>
+                        <button class="export-btn" onclick="exportToExcel()" style="background: linear-gradient(135deg, #007bff, #00c6fb);">
+                            <i class="fas fa-file-excel me-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4" id="statsCards">
+                    <div class="col-md-3 col-6">
+                        <div class="stats-card">
+                            <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                            <h4 id="totalRecords">0</h4>
+                            <small class="text-muted">Total Records</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stats-card">
+                            <i class="fas fa-heartbeat fa-2x text-danger mb-2"></i>
+                            <h4 id="avgHeartRate">--</h4>
+                            <small class="text-muted">Avg Heart Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stats-card">
+                            <i class="fas fa-tachometer-alt fa-2x text-info mb-2"></i>
+                            <h4 id="avgBP">--/--</h4>
+                            <small class="text-muted">Avg Blood Pressure</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stats-card">
+                            <i class="fas fa-shoe-prints fa-2x text-success mb-2"></i>
+                            <h4 id="totalSteps">0</h4>
+                            <small class="text-muted">Total Steps</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="row align-items-end">
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <label class="form-label"><i class="far fa-calendar-alt me-1"></i>Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <label class="form-label"><i class="far fa-calendar-alt me-1"></i>End Date</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-2 mb-3 mb-md-0">
+                            <label class="form-label"><i class="fas fa-filter me-1"></i>Status Filter</label>
+                            <select class="form-select" id="filterType">
+                                <option value="all">All Records</option>
+                                <option value="critical">Critical Only</option>
+                                <option value="warning">Warnings Only</option>
+                                <option value="normal">Normal Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3 mb-md-0">
+                            <label class="form-label"><i class="fas fa-chart-simple me-1"></i>Metric Filter</label>
+                            <select class="form-select" id="metricFilter">
+                                <option value="all">All Metrics</option>
+                                <option value="heart_rate">Heart Rate</option>
+                                <option value="bp">Blood Pressure</option>
+                                <option value="oxygen">Blood Oxygen</option>
+                                <option value="steps">Steps</option>
+                                <option value="sleep">Sleep</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex gap-2">
+                                <button class="btn-filter w-100" onclick="applyFilters()">
+                                    <i class="fas fa-search me-1"></i>Apply
+                                </button>
+                                <button class="btn-reset" onclick="resetFilters()">
+                                    <i class="fas fa-undo-alt me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart Section -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="content-card">
+                            <h5><i class="fas fa-chart-line me-2"></i>Historical Trends</h5>
+                            <canvas id="historyChart" height="80"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Table -->
+                <div class="content-card">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-health" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th><i class="far fa-calendar-alt me-1"></i> Date & Time</th>
+                                    <th><i class="fas fa-heartbeat me-1"></i> Heart Rate</th>
+                                    <th><i class="fas fa-tachometer-alt me-1"></i> Blood Pressure</th>
+                                    <th><i class="fas fa-lungs me-1"></i> Blood Oxygen</th>
+                                    <th><i class="fas fa-shoe-prints me-1"></i> Steps</th>
+                                    <th><i class="fas fa-bed me-1"></i> Sleep</th>
+                                    <th><i class="fas fa-tint me-1"></i> Water</th>
+                                    <th><i class="fas fa-brain me-1"></i> Stress</th>
+                                    <th><i class="fas fa-chart-simple me-1"></i> Status</th>
+                                    <th><i class="fas fa-cog me-1"></i> Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                                <tr>
+                                    <td colspan="10" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading your health data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    
+
+
+    <script>
+        let allMetrics = [];
+        let dataTable = null;
+        let historyChart = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+        });
+        
+        async function loadHistory() {
+            showLoading(true);
+            try {
+                const response = await fetch('/api/health-metrics?days=365');
+                const data = await response.json();
+                allMetrics = data.metrics || [];
+                updateStatistics();
+                updateHistoryChart();
+                renderTable(allMetrics);
+                showToast(`Loaded ${allMetrics.length} health records`, 'success');
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showToast('Failed to load history data', 'error');
+                document.getElementById('historyBody').innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please refresh the page.</td></tr>';
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function updateStatistics() {
+            if (!allMetrics.length) return;
+            
+            document.getElementById('totalRecords').innerText = allMetrics.length;
+            
+            // Average Heart Rate
+            const hrValues = allMetrics.filter(m => m.heart_rate).map(m => m.heart_rate);
+            const avgHR = (hrValues.reduce((a,b) => a + b, 0) / hrValues.length).toFixed(1);
+            document.getElementById('avgHeartRate').innerText = avgHR;
+            
+            // Average BP
+            const sbpValues = allMetrics.filter(m => m.systolic_bp).map(m => m.systolic_bp);
+            const dbpValues = allMetrics.filter(m => m.diastolic_bp).map(m => m.diastolic_bp);
+            const avgSBP = (sbpValues.reduce((a,b) => a + b, 0) / sbpValues.length).toFixed(0);
+            const avgDBP = (dbpValues.reduce((a,b) => a + b, 0) / dbpValues.length).toFixed(0);
+            document.getElementById('avgBP').innerHTML = `${avgSBP}/${avgDBP}`;
+            
+            // Total Steps
+            const totalSteps = allMetrics.reduce((sum, m) => sum + (m.steps || 0), 0);
+            document.getElementById('totalSteps').innerText = totalSteps.toLocaleString();
+        }
+        
+        function updateHistoryChart() {
+            if (!allMetrics.length) return;
+            
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            
+            // Group by date
+            const grouped = {};
+            allMetrics.forEach(m => {
+                const date = new Date(m.recorded_at).toLocaleDateString();
+                if (!grouped[date]) {
+                    grouped[date] = { hr: [], sbp: [], dbp: [], count: 0 };
+                }
+                if (m.heart_rate) grouped[date].hr.push(m.heart_rate);
+                if (m.systolic_bp) grouped[date].sbp.push(m.systolic_bp);
+                if (m.diastolic_bp) grouped[date].dbp.push(m.diastolic_bp);
+                grouped[date].count++;
+            });
+            
+            const labels = Object.keys(grouped).slice(-30);
+            const hrData = labels.map(d => grouped[d].hr.length ? (grouped[d].hr.reduce((a,b) => a+b, 0) / grouped[d].hr.length).toFixed(1) : null);
+            const sbpData = labels.map(d => grouped[d].sbp.length ? (grouped[d].sbp.reduce((a,b) => a+b, 0) / grouped[d].sbp.length).toFixed(0) : null);
+            
+            if (historyChart) historyChart.destroy();
+            
+            historyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Heart Rate (bpm)',
+                            data: hrData,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220,53,69,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Systolic BP (mmHg)',
+                            data: sbpData,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13,110,253,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    }
+                }
+            });
+        }
+        
+        function getOverallStatus(hr, sbp, dbp, spo2) {
+            let issues = [];
+            if (hr && (hr < 60 || hr > 100)) issues.push('HR');
+            if (sbp && (sbp < 90 || sbp > 140)) issues.push('BP');
+            if (spo2 && spo2 < 95) issues.push('SpO2');
+            
+            if (issues.length === 0) return { class: 'normal', text: 'Normal' };
+            if (issues.length === 1) return { class: 'warning', text: 'Warning' };
+            return { class: 'critical', text: 'Critical' };
+        }
+        
+        function getMetricValueClass(value, type) {
+            if (!value) return '';
+            if (type === 'hr') {
+                if (value < 60 || value > 100) return 'warning';
+                if (value < 50 || value > 120) return 'critical';
+            }
+            if (type === 'spo2') {
+                if (value < 95) return 'warning';
+                if (value < 90) return 'critical';
+            }
+            return 'normal';
+        }
+        
+        function renderTable(metrics) {
+            const tbody = document.getElementById('historyBody');
+            
+            if (!metrics || metrics.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5"><i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>No records found for selected filters</td></tr>';
+                if (dataTable) dataTable.destroy();
+                return;
+            }
+            
+            tbody.innerHTML = metrics.map(m => {
+                const status = getOverallStatus(m.heart_rate, m.systolic_bp, m.diastolic_bp, m.blood_oxygen);
+                const hrClass = getMetricValueClass(m.heart_rate, 'hr');
+                const spo2Class = getMetricValueClass(m.blood_oxygen, 'spo2');
+                
+                return `
+                    <tr>
+                        <td><i class="far fa-clock me-1 text-muted"></i>${new Date(m.recorded_at).toLocaleString()}</td>
+                        <td><span class="${hrClass}">${m.heart_rate || '--'}</span></td>
+                        <td>${m.systolic_bp && m.diastolic_bp ? `${m.systolic_bp}/${m.diastolic_bp}` : '--/--'}</td>
+                        <td><span class="${spo2Class}">${m.blood_oxygen || '--'}%</span></td>
+                        <td>${(m.steps || 0).toLocaleString()}</td>
+                        <td>${m.sleep_hours || 0} hrs</td>
+                        <td>${m.water_intake_ml || 0} ml</td>
+                        <td>${m.stress_level || '--'}/10</td>
+                        <td><span class="${status.class}">${status.text}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${m.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteRecord(${m.id})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Initialize or update DataTable
+            if (dataTable) dataTable.destroy();
+            dataTable = $('#historyTable').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 15,
+                language: {
+                    search: "<i class='fas fa-search'></i> Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No entries found",
+                    paginate: { first: "First", last: "Last", next: "→", previous: "←" }
+                },
+                columnDefs: [
+                    { orderable: false, targets: [9] }
+                ]
+            });
+        }
+        
+        function applyFilters() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const filterType = document.getElementById('filterType').value;
+            const metricFilter = document.getElementById('metricFilter').value;
+            
+            let filtered = [...allMetrics];
+            
+            // Date filter
+            if (startDate) {
+                filtered = filtered.filter(m => new Date(m.recorded_at) >= new Date(startDate));
+            }
+            if (endDate) {
+                filtered = filtered.filter(m => new Date(m.recorded_at) <= new Date(endDate + ' 23:59:59'));
+            }
+            
+            // Status filter
+            if (filterType !== 'all') {
+                filtered = filtered.filter(m => {
+                    const status = getOverallStatus(m.heart_rate, m.systolic_bp, m.diastolic_bp, m.blood_oxygen);
+                    if (filterType === 'critical') return status.class === 'critical';
+                    if (filterType === 'warning') return status.class === 'warning';
+                    if (filterType === 'normal') return status.class === 'normal';
+                    return true;
+                });
+            }
+            
+            // Metric filter
+            if (metricFilter !== 'all') {
+                filtered = filtered.filter(m => {
+                    if (metricFilter === 'heart_rate') return m.heart_rate && (m.heart_rate < 60 || m.heart_rate > 100);
+                    if (metricFilter === 'bp') return m.systolic_bp && (m.systolic_bp < 90 || m.systolic_bp > 140);
+                    if (metricFilter === 'oxygen') return m.blood_oxygen && m.blood_oxygen < 95;
+                    if (metricFilter === 'steps') return m.steps && m.steps < 5000;
+                    if (metricFilter === 'sleep') return m.sleep_hours && m.sleep_hours < 6;
+                    return true;
+                });
+            }
+            
+            renderTable(filtered);
+            showToast(`Found ${filtered.length} records`, 'success');
+        }
+        
+        function resetFilters() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('filterType').value = 'all';
+            document.getElementById('metricFilter').value = 'all';
+            renderTable(allMetrics);
+            showToast('Filters reset', 'success');
+        }
+        
+        function exportToCSV() {
+            if (!allMetrics.length) {
+                showToast('No data to export', 'error');
+                return;
+            }
+            
+            const headers = ['Date', 'Heart Rate', 'Systolic BP', 'Diastolic BP', 'Blood Oxygen', 'Steps', 'Sleep Hours', 'Water Intake', 'Stress Level', 'Status'];
+            const rows = allMetrics.map(m => {
+                const status = getOverallStatus(m.heart_rate, m.systolic_bp, m.diastolic_bp, m.blood_oxygen);
+                return [
+                    new Date(m.recorded_at).toLocaleString(),
+                    m.heart_rate || '',
+                    m.systolic_bp || '',
+                    m.diastolic_bp || '',
+                    m.blood_oxygen || '',
+                    m.steps || 0,
+                    m.sleep_hours || 0,
+                    m.water_intake_ml || 0,
+                    m.stress_level || '',
+                    status.text
+                ];
+            });
+            
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health_history_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV exported successfully', 'success');
+        }
+        
+        function exportToExcel() {
+            if (!allMetrics.length) {
+                showToast('No data to export', 'error');
+                return;
+            }
+            
+            const data = allMetrics.map(m => ({
+                'Date': new Date(m.recorded_at).toLocaleString(),
+                'Heart Rate': m.heart_rate || '',
+                'Systolic BP': m.systolic_bp || '',
+                'Diastolic BP': m.diastolic_bp || '',
+                'Blood Oxygen': m.blood_oxygen || '',
+                'Steps': m.steps || 0,
+                'Sleep Hours': m.sleep_hours || 0,
+                'Water Intake': m.water_intake_ml || 0,
+                'Stress Level': m.stress_level || '',
+                'Status': getOverallStatus(m.heart_rate, m.systolic_bp, m.diastolic_bp, m.blood_oxygen).text
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Health History');
+            XLSX.writeFile(wb, `health_history_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('Excel exported successfully', 'success');
+        }
+        
+        function viewDetails(recordId) {
+            const record = allMetrics.find(m => m.id === recordId);
+            if (record) {
+                alert(`Health Record Details:\n\nDate: ${new Date(record.recorded_at).toLocaleString()}\nHeart Rate: ${record.heart_rate} bpm\nBP: ${record.systolic_bp}/${record.diastolic_bp} mmHg\nBlood Oxygen: ${record.blood_oxygen}%\nSteps: ${record.steps}\nSleep: ${record.sleep_hours} hrs\nNotes: ${record.notes || 'No notes'}`);
+            }
+        }
+        
+        async function deleteRecord(recordId) {
+            if (confirm('Are you sure you want to delete this record? This action cannot be undone.')) {
+                try {
+                    const response = await fetch(`/api/health-metrics/${recordId}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        showToast('Record deleted successfully', 'success');
+                        loadHistory();
+                    } else {
+                        showToast('Failed to delete record', 'error');
+                    }
+                } catch (error) {
+                    showToast('Network error', 'error');
+                }
+            }
+        }
+        
+        function showLoading(show) {
+            // Loading indicator logic
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'error' ? 'times-circle' : 'exclamation-triangle')} me-2 fa-lg"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.nav-link[onclick="toggleDarkMode()"] i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+        
+        // Set default date range (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    </script>
+
+<a class="nav-link" href="/batch-analyze">
+    <i class="fas fa-database"></i> Batch ML Analyze
+</a>
+</body>
+</html>

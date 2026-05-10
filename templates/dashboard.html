@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Dashboard - HealthMonitor System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <style>
+        * {
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fb;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+        
+        body.dark-mode .stat-card,
+        body.dark-mode .metric-input,
+        body.dark-mode .trend-chart {
+            background: #16213e;
+            color: #ffffff;
+            border: 1px solid #2c3e50;
+        }
+        
+        body.dark-mode .alert-item {
+            background: #16213e;
+            color: #ffffff;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode .sidebar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-right: 1px solid #2c3e50;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link i {
+            width: 25px;
+            margin-right: 10px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .stat-card:hover::before {
+            left: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card i {
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover i {
+            transform: scale(1.1);
+        }
+        
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .alert-item {
+            border-left: 4px solid;
+            margin-bottom: 12px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .alert-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .metric-input {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        
+        .metric-input:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .btn-record {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-record::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+        
+        .btn-record:active::after {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .btn-record:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+        
+        .trend-chart {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        
+        .trend-chart:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .toast-error { background: linear-gradient(135deg, #eb3349, #f45c43); }
+        .toast-warning { background: linear-gradient(135deg, #f2994a, #f2c94c); }
+        .toast-info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                z-index: 1000;
+            }
+            .col-md-10 {
+                margin-bottom: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toastContainer"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 p-0">
+                <div class="sidebar p-3">
+                    <h4 class="text-center mb-4 mt-3">
+                        <i class="fas fa-heartbeat me-2"></i>HealthPro
+                    </h4>
+                    <hr class="bg-light">
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="/history">
+                            <i class="fas fa-history"></i> Health History
+                        </a>
+                        <a class="nav-link" href="/reports">
+                            <i class="fas fa-chart-line"></i> Reports
+                        </a>
+                        <a class="nav-link" href="/goals">
+                            <i class="fas fa-bullseye"></i> Health Goals
+                        </a>
+                        <a class="nav-link" href="/batch-analyze">
+                            <i class="fas fa-database"></i> Batch ML Analyze
+                        </a>
+                        <a class="nav-link" href="/profile">
+                            <i class="fas fa-user-circle"></i> Profile
+                        </a>
+                        <hr class="bg-light">
+                        <a class="nav-link" href="#" onclick="toggleDarkMode()">
+                            <i class="fas fa-moon"></i> Dark Mode
+                        </a>
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                    <div>
+                        <h2><i class="fas fa-tachometer-alt me-2"></i>Health Dashboard</h2>
+                        <p class="text-muted mb-0" id="greeting"></p>
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        <span class="badge bg-primary p-2 me-2" id="currentTime"></span>
+                        <span class="badge bg-success p-2" id="lastUpdate"></span>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="row" id="statsCards">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-heartbeat fa-3x text-danger"></i>
+                            <h3 class="mt-2" id="heartRate">--</h3>
+                            <p class="text-muted mb-0">Heart Rate (bpm)</p>
+                            <small id="hrStatus" class="text-muted"></small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-tachometer-alt fa-3x text-primary"></i>
+                            <h3 class="mt-2" id="bloodPressure">--/--</h3>
+                            <p class="text-muted mb-0">Blood Pressure (mmHg)</p>
+                            <small id="bpStatus" class="text-muted"></small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-lungs fa-3x text-info"></i>
+                            <h3 class="mt-2" id="bloodOxygen">--%</h3>
+                            <p class="text-muted mb-0">Blood Oxygen (SpO2)</p>
+                            <small id="o2Status" class="text-muted"></small>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-shoe-prints fa-3x text-success"></i>
+                            <h3 class="mt-2" id="steps">--</h3>
+                            <p class="text-muted mb-0">Steps Today</p>
+                            <small id="stepsStatus" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Metrics Row -->
+                <div class="row">
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-bed fa-2x text-primary"></i>
+                            <h5 id="sleepHours">-- hrs</h5>
+                            <small class="text-muted">Sleep</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-tint fa-2x text-info"></i>
+                            <h5 id="waterIntake">-- ml</h5>
+                            <small class="text-muted">Water</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-brain fa-2x text-warning"></i>
+                            <h5 id="stressLevel">--/10</h5>
+                            <small class="text-muted">Stress</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card text-center">
+                            <i class="fas fa-smile fa-2x text-success"></i>
+                            <h5 id="moodScore">--/10</h5>
+                            <small class="text-muted">Mood</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Row: Form + Risk Assessment -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="metric-input">
+                            <h5><i class="fas fa-microphone-alt me-2"></i>Record Health Metrics</h5>
+                            <form id="healthForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-heartbeat text-danger"></i> Heart Rate (bpm)</label>
+                                        <input type="number" class="form-control" id="hr" required placeholder="60-100">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-tachometer-alt text-primary"></i> Systolic BP (mmHg)</label>
+                                        <input type="number" class="form-control" id="sbp" required placeholder="120">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-tachometer-alt text-primary"></i> Diastolic BP (mmHg)</label>
+                                        <input type="number" class="form-control" id="dbp" required placeholder="80">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-lungs text-info"></i> Blood Oxygen (%)</label>
+                                        <input type="number" step="0.1" class="form-control" id="spo2" placeholder="95-100" value="98">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-thermometer-half"></i> Body Temperature (°F)</label>
+                                        <input type="number" step="0.1" class="form-control" id="temperature" placeholder="98.6" value="98.6">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-lungs"></i> Respiratory Rate</label>
+                                        <input type="number" class="form-control" id="respiratory" placeholder="12-20" value="16">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-shoe-prints text-success"></i> Steps</label>
+                                        <input type="number" class="form-control" id="stepsInput" placeholder="0">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-bed text-primary"></i> Sleep (hours)</label>
+                                        <input type="number" step="0.5" class="form-control" id="sleep" placeholder="7-8">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-tint text-info"></i> Water Intake (ml)</label>
+                                        <input type="number" class="form-control" id="water" placeholder="2000">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-weight-scale"></i> Weight (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" id="weight" placeholder="70">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-ruler"></i> Height (cm)</label>
+                                        <input type="number" step="0.1" class="form-control" id="height" placeholder="170">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label"><i class="fas fa-brain text-warning"></i> Stress Level (1-10)</label>
+                                        <input type="range" class="form-range" id="stress" min="1" max="10" value="3">
+                                        <span id="stressValue" class="badge bg-warning mt-1">3</span>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label"><i class="fas fa-notes-medical"></i> Notes</label>
+                                        <textarea class="form-control" id="notes" rows="2" placeholder="Any symptoms or observations..."></textarea>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-record w-100" id="submitBtn">
+                                    <i class="fas fa-save me-2"></i>Record & Analyze
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="metric-input" id="riskAssessment">
+                            <h5><i class="fas fa-brain me-2"></i>AI Risk Assessment</h5>
+                            <div id="riskContent" class="text-center p-4">
+                                <div class="display-4 mb-3" id="riskIcon">
+                                    <i class="fas fa-shield-alt text-secondary"></i>
+                                </div>
+                                <h4 id="riskLevel">No Data Available</h4>
+                                <div id="riskGauge" class="mt-3"></div>
+                                <p id="riskConfidence" class="text-muted mt-2"></p>
+                                <div id="recommendations" class="mt-3 text-start"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECRET/UNIQUE FEATURES SECTION -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="trend-chart" style="background: linear-gradient(135deg, #667eea15, #764ba215);">
+                            <h5><i class="fas fa-crown me-2" style="color: gold;"></i>🔮 EXCLUSIVE FEATURES (World's First)</h5>
+                            <p class="text-muted small">These features use advanced AI and physics concepts - not available anywhere else!</p>
+                            
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-2 col-6">
+                                    <button class="btn btn-outline-primary w-100" onclick="healthTimeMachine()" style="border-radius: 50px;">
+                                        <i class="fas fa-clock"></i> Time Machine
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-6">
+                                    <button class="btn btn-outline-warning w-100" onclick="diseaseWeather()" style="border-radius: 50px;">
+                                        <i class="fas fa-cloud-sun"></i> Disease Weather
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-6">
+                                    <button class="btn btn-outline-info w-100" onclick="silentSymptoms()" style="border-radius: 50px;">
+                                        <i class="fas fa-ear-listen"></i> Silent Symptoms
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-6">
+                                    <button class="btn btn-outline-danger w-100" onclick="healthGravity()" style="border-radius: 50px;">
+                                        <i class="fas fa-globe"></i> Health Gravity
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-6">
+                                    <button class="btn btn-outline-success w-100" onclick="recoveryTime()" style="border-radius: 50px;">
+                                        <i class="fas fa-chart-line"></i> Recovery Time
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Results Div -->
+                            <div id="uniqueFeaturesResult" class="mt-3" style="display: none;">
+                                <div class="alert alert-dark" id="featuresResultContent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="trend-chart">
+                            <h5><i class="fas fa-chart-line me-2"></i>7-Day Health Trend</h5>
+                            <canvas id="trendChart" height="120"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="trend-chart">
+                            <h5><i class="fas fa-chart-pie me-2"></i>Alert Distribution</h5>
+                            <canvas id="alertPieChart" height="120"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Alerts -->
+                <div class="trend-chart mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="fas fa-bell me-2"></i>Recent Alerts</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="markAllRead()">Mark All Read</button>
+                    </div>
+                    <div id="alertsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--################################################# JavaScipt File #####################################################-->
+    <script>
+        let trendChart = null;
+        let alertPieChart = null;
+        let updateInterval;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            setGreeting();
+            setupStressSlider();
+            startAutoRefresh();
+        });
+        
+        function setGreeting() {
+            const hour = new Date().getHours();
+            const greeting = hour < 12 ? 'Good Morning' : (hour < 18 ? 'Good Afternoon' : 'Good Evening');
+            document.getElementById('greeting').innerHTML = `${greeting}, <strong>${sessionStorage.getItem('username') || 'User'}</strong>! 👋`;
+        }
+        
+        function setupStressSlider() {
+            const slider = document.getElementById('stress');
+            const value = document.getElementById('stressValue');
+            slider.addEventListener('input', function() {
+                value.textContent = this.value;
+                let color = this.value < 4 ? 'success' : (this.value < 7 ? 'warning' : 'danger');
+                value.className = `badge bg-${color} mt-1`;
+            });
+        }
+        
+        function updateTime() {
+            document.getElementById('currentTime').innerText = new Date().toLocaleString();
+            document.getElementById('lastUpdate').innerHTML = `<i class="fas fa-sync-alt me-1"></i>Updated: ${new Date().toLocaleTimeString()}`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        function startAutoRefresh() {
+            setInterval(() => {
+                loadDashboard();
+            }, 30000);
+        }
+        
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                const data = await response.json();
+                
+                if (data.latest_metrics) {
+                    updateStatsCards(data.latest_metrics);
+                }
+                
+                if (data.risk_assessment) {
+                    updateRiskAssessment(data.risk_assessment);
+                }
+                
+                if (data.weekly_trend && data.weekly_trend.length > 0) {
+                    updateChart(data.weekly_trend);
+                }
+                
+                if (data.alert_stats) {
+                    updateAlertPieChart(data.alert_stats);
+                }
+                
+                await loadAlerts();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showToast('Failed to load dashboard data', 'error');
+            }
+        }
+        
+        function updateStatsCards(metrics) {
+            const hr = metrics.heart_rate;
+            document.getElementById('heartRate').innerText = hr || '--';
+            const hrStatus = document.getElementById('hrStatus');
+            if (hr) {
+                if (hr < 60) hrStatus.innerHTML = '<i class="fas fa-arrow-down text-warning"></i> Low';
+                else if (hr > 100) hrStatus.innerHTML = '<i class="fas fa-arrow-up text-warning"></i> High';
+                else hrStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i> Normal';
+            }
+            
+            const sbp = metrics.systolic_bp;
+            const dbp = metrics.diastolic_bp;
+            document.getElementById('bloodPressure').innerText = sbp && dbp ? `${sbp}/${dbp}` : '--/--';
+            const bpStatus = document.getElementById('bpStatus');
+            if (sbp && dbp) {
+                if (sbp > 140 || dbp > 90) bpStatus.innerHTML = '<i class="fas fa-arrow-up text-danger"></i> High';
+                else if (sbp < 90 || dbp < 60) bpStatus.innerHTML = '<i class="fas fa-arrow-down text-warning"></i> Low';
+                else bpStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i> Normal';
+            }
+            
+            const o2 = metrics.blood_oxygen;
+            document.getElementById('bloodOxygen').innerText = o2 ? `${o2}%` : '--%';
+            const o2Status = document.getElementById('o2Status');
+            if (o2) {
+                if (o2 < 90) o2Status.innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i> Critical';
+                else if (o2 < 95) o2Status.innerHTML = '<i class="fas fa-arrow-down text-warning"></i> Low';
+                else o2Status.innerHTML = '<i class="fas fa-check-circle text-success"></i> Good';
+            }
+            
+            document.getElementById('steps').innerText = metrics.steps?.toLocaleString() || '0';
+            document.getElementById('sleepHours').innerText = metrics.sleep_hours ? `${metrics.sleep_hours} hrs` : '-- hrs';
+            document.getElementById('waterIntake').innerText = metrics.water_intake_ml ? `${metrics.water_intake_ml} ml` : '-- ml';
+            document.getElementById('stressLevel').innerText = metrics.stress_level ? `${metrics.stress_level}/10` : '--/10';
+            document.getElementById('moodScore').innerText = metrics.mood_score ? `${metrics.mood_score}/10` : '--/10';
+        }
+        
+        function updateRiskAssessment(risk) {
+            const riskIcon = document.getElementById('riskIcon');
+            const riskLevel = document.getElementById('riskLevel');
+            const riskConfidence = document.getElementById('riskConfidence');
+            
+            riskLevel.innerText = risk.risk_level;
+            riskLevel.className = `text-${risk.risk_color}`;
+            
+            const icons = {
+                'Low Risk': '<i class="fas fa-check-circle text-success fa-4x"></i>',
+                'Medium Risk': '<i class="fas fa-exclamation-triangle text-warning fa-4x"></i>',
+                'High Risk': '<i class="fas fa-times-circle text-danger fa-4x"></i>'
+            };
+            riskIcon.innerHTML = icons[risk.risk_level] || '<i class="fas fa-shield-alt fa-4x"></i>';
+            
+            riskConfidence.innerHTML = `<i class="fas fa-chart-line me-1"></i>Confidence: ${(risk.confidence * 100).toFixed(1)}%`;
+            
+            const gaugeHtml = `
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-${risk.risk_color === 'success' ? 'success' : (risk.risk_color === 'warning' ? 'warning' : 'danger')}" 
+                         style="width: ${risk.risk_score * 100}%" 
+                         role="progressbar">
+                    </div>
+                </div>
+                <small class="text-muted">Risk Score: ${(risk.risk_score * 100).toFixed(1)}%</small>
+            `;
+            document.getElementById('riskGauge').innerHTML = gaugeHtml;
+        }
+        
+        function updateChart(trendData) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const labels = trendData.map(t => t.date);
+            const hrData = trendData.map(t => t.avg_hr);
+            const sbpData = trendData.map(t => t.avg_sbp);
+            
+            if (trendChart) trendChart.destroy();
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Heart Rate (bpm)',
+                            data: hrData,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220,53,69,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Systolic BP (mmHg)',
+                            data: sbpData,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13,110,253,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    }
+                }
+            });
+        }
+        
+        function updateAlertPieChart(alertStats) {
+            const ctx = document.getElementById('alertPieChart').getContext('2d');
+            const severityMap = {};
+            alertStats.forEach(s => { severityMap[s.severity] = s.count; });
+            
+            const labels = Object.keys(severityMap);
+            const data = Object.values(severityMap);
+            const colors = { critical: '#dc3545', high: '#fd7e14', medium: '#ffc107', low: '#28a745' };
+            const bgColors = labels.map(l => colors[l.toLowerCase()] || '#6c757d');
+            
+            if (alertPieChart) alertPieChart.destroy();
+            
+            alertPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColors, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+        
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts?unread=false&limit=10');
+                const data = await response.json();
+                const alertsDiv = document.getElementById('alertsList');
+                
+                if (data.alerts && data.alerts.length > 0) {
+                    alertsDiv.innerHTML = data.alerts.map(alert => `
+                        <div class="alert-item" style="border-left-color: ${getSeverityColor(alert.severity)}" onclick="viewAlert(${alert.id})">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="text-${getSeverityTextColor(alert.severity)}">
+                                        <i class="fas fa-${getSeverityIcon(alert.severity)} me-1"></i>${alert.title || alert.alert_type}
+                                    </strong>
+                                    <p class="mb-0 small mt-1">${alert.message}</p>
+                                    <small class="text-muted"><i class="far fa-clock me-1"></i>${formatDate(alert.created_at)}</small>
+                                </div>
+                                ${!alert.is_read ? `<span class="badge bg-danger">New</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    alertsDiv.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>No alerts to display</div>';
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+        
+        function getSeverityColor(severity) {
+            const colors = { critical: '#dc3545', high: '#fd7e14', medium: '#ffc107', low: '#28a745', warning: '#ffc107' };
+            return colors[severity?.toLowerCase()] || '#6c757d';
+        }
+        
+        function getSeverityTextColor(severity) {
+            const colors = { critical: 'danger', high: 'danger', medium: 'warning', low: 'success', warning: 'warning' };
+            return colors[severity?.toLowerCase()] || 'secondary';
+        }
+        
+        function getSeverityIcon(severity) {
+            const icons = { critical: 'exclamation-circle', high: 'exclamation-triangle', medium: 'bell', low: 'info-circle', warning: 'bell' };
+            return icons[severity?.toLowerCase()] || 'bell';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000 / 60);
+            if (diff < 1) return 'Just now';
+            if (diff < 60) return `${diff} minutes ago`;
+            if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+            return date.toLocaleDateString();
+        }
+        
+        async function markRead(alertId) {
+            try {
+                await fetch(`/api/alerts/${alertId}/read`, { method: 'PUT' });
+                loadAlerts();
+                showToast('Alert marked as read', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        async function markAllRead() {
+            try {
+                const alerts = await fetch('/api/alerts?unread=true').then(r => r.json());
+                for (const alert of alerts.alerts || []) {
+                    await fetch(`/api/alerts/${alert.id}/read`, { method: 'PUT' });
+                }
+                loadAlerts();
+                showToast('All alerts marked as read', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function viewAlert(alertId) {
+            markRead(alertId);
+        }
+        
+        document.getElementById('healthForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader me-2"></span>Processing...';
+            
+            const data = {
+                heart_rate: parseInt(document.getElementById('hr').value),
+                systolic_bp: parseInt(document.getElementById('sbp').value),
+                diastolic_bp: parseInt(document.getElementById('dbp').value),
+                blood_oxygen: parseFloat(document.getElementById('spo2').value) || 98,
+                body_temperature: parseFloat(document.getElementById('temperature').value) || 98.6,
+                respiratory_rate: parseInt(document.getElementById('respiratory').value) || 16,
+                steps: parseInt(document.getElementById('stepsInput').value) || 0,
+                sleep_hours: parseFloat(document.getElementById('sleep').value) || 0,
+                water_intake_ml: parseInt(document.getElementById('water').value) || 0,
+                weight_kg: parseFloat(document.getElementById('weight').value),
+                height_cm: parseFloat(document.getElementById('height').value),
+                stress_level: parseInt(document.getElementById('stress').value),
+                notes: document.getElementById('notes').value
+            };
+            
+            try {
+                const response = await fetch('/api/health-metrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    if (result.recommendations) {
+                        const recDiv = document.getElementById('recommendations');
+                        recDiv.innerHTML = `
+                            <div class="alert alert-${result.risk_assessment?.risk_color === 'success' ? 'success' : (result.risk_assessment?.risk_color === 'warning' ? 'warning' : 'danger')} mt-3">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>AI Recommendations:</strong>
+                                <ul class="mb-0 mt-2">
+                                    ${result.recommendations.map(rec => `<li><i class="fas fa-chevron-right me-1"></i>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    if (result.alerts && result.alerts.length > 0) {
+                        showToast(`${result.alerts.length} alert(s) generated`, 'warning');
+                    }
+                    
+                    showToast('Health metrics recorded successfully!', 'success');
+                    loadDashboard();
+                    
+                    document.getElementById('stepsInput').value = '';
+                    document.getElementById('sleep').value = '';
+                    document.getElementById('water').value = '';
+                    document.getElementById('notes').value = '';
+                } else {
+                    showToast(result.error || 'Failed to record metrics', 'error');
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Record & Analyze';
+            }
+        });
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'error' ? 'times-circle' : 'exclamation-triangle')} me-2 fa-lg"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button class="btn-close btn-close-white ms-3" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.nav-link[onclick="toggleDarkMode()"] i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+        
+        // Initial load
+        loadDashboard();
+
+        // ============ UNIQUE FEATURES FUNCTIONS ============
+
+        async function healthTimeMachine() {
+            const resultDiv = document.getElementById('uniqueFeaturesResult');
+            const contentDiv = document.getElementById('featuresResultContent');
+            
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Analyzing health time travel...</div>';
+            
+            try {
+                const res = await fetch('/api/time-machine/' + (sessionStorage.getItem('userId') || '1'));
+                const data = await res.json();
+                
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                                <h6>⏰ HEALTH TIME MACHINE</h6>
+                                <p>Past 30 days Avg HR: <strong>${data.past_30_days_avg_hr}</strong> bpm</p>
+                                <p>Current Health Score: <strong>${data.current_health_score}</strong>/100</p>
+                                <p>Predicted 30 Days Score: <strong>${data.predicted_30_days_score}</strong>/100</p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-${data.trend === 'IMPROVING' ? 'success' : (data.trend === 'DECLINING' ? 'danger' : 'info')}">
+                                    <i class="fas ${data.trend === 'IMPROVING' ? 'fa-arrow-up' : (data.trend === 'DECLINING' ? 'fa-arrow-down' : 'fa-minus')} me-2"></i>
+                                    <strong>Trend: ${data.trend}</strong>
+                                    <p class="mt-2 mb-0">${data.time_machine_message}</p>
+                                </div>
+                                ${data.improvement_needed > 0 ? `<small class="text-muted">Need ${data.improvement_needed} points improvement to reach ideal health</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `<div class="alert alert-warning">${data.error || 'Not enough data for time machine'}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading time machine data</div>';
+            }
+        }
+
+        async function diseaseWeather() {
+            const resultDiv = document.getElementById('uniqueFeaturesResult');
+            const contentDiv = document.getElementById('featuresResultContent');
+            
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Checking disease weather...</div>';
+            
+            try {
+                const res = await fetch('/api/disease-weather/' + (sessionStorage.getItem('userId') || '1'));
+                const data = await res.json();
+                
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <div class="row align-items-center">
+                            <div class="col-md-4 text-center">
+                                <div style="font-size: 48px;">${data.disease_weather.split(' ')[0]}</div>
+                            </div>
+                            <div class="col-md-8">
+                                <h6>🌤️ DISEASE WEATHER MAP</h6>
+                                <p><strong>${data.disease_weather}</strong></p>
+                                <p>Risk Percentage: <span class="badge ${data.risk_percentage > 50 ? 'bg-danger' : (data.risk_percentage > 25 ? 'bg-warning' : 'bg-success')}" style="font-size: 14px;">${data.risk_percentage}%</span></p>
+                                <p><i class="fas fa-tasks me-2"></i>${data.action_required}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `<div class="alert alert-warning">${data.error || 'Need more data for weather prediction'}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading disease weather</div>';
+            }
+        }
+
+        async function silentSymptoms() {
+            const resultDiv = document.getElementById('uniqueFeaturesResult');
+            const contentDiv = document.getElementById('featuresResultContent');
+            
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Detecting silent symptoms...</div>';
+            
+            try {
+                const res = await fetch('/api/silent-symptoms/' + (sessionStorage.getItem('userId') || '1'));
+                const data = await res.json();
+                
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <h6><i class="fas fa-ear-listen me-2"></i>SILENT SYMPTOM DETECTOR</h6>
+                        <div class="row">
+                            ${data.silent_symptoms.map(s => `
+                                <div class="col-md-6 mb-2">
+                                    <div class="alert alert-sm alert-${s.includes('✅') ? 'success' : 'warning'} p-2 mb-0">
+                                        ${s}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <small class="text-muted mt-2">These symptoms are hidden from regular checkups</small>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `<div class="alert alert-warning">${data.error || 'Need more data'}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error detecting silent symptoms</div>';
+            }
+        }
+
+        async function healthGravity() {
+            const resultDiv = document.getElementById('uniqueFeaturesResult');
+            const contentDiv = document.getElementById('featuresResultContent');
+            
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Calculating health gravity...</div>';
+            
+            try {
+                const res = await fetch('/api/health-gravity/' + (sessionStorage.getItem('userId') || '1'));
+                const data = await res.json();
+                
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div style="font-size: 48px;">
+                                    ${data.gravity_score < 30 ? '🚀' : (data.gravity_score < 60 ? '🌙' : '🕳️')}
+                                </div>
+                                <h3>${data.gravity_score}G</h3>
+                            </div>
+                            <div class="col-md-8">
+                                <h6>🌍 HEALTH GRAVITY SCORE</h6>
+                                <p><strong>${data.gravity_level}</strong></p>
+                                <p>${data.message}</p>
+                                <p>Escaping velocity needed: <strong>${data.escaping_velocity_needed}</strong> points</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `<div class="alert alert-warning">${data.error}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error calculating gravity</div>';
+            }
+        }
+
+        async function recoveryTime() {
+            const resultDiv = document.getElementById('uniqueFeaturesResult');
+            const contentDiv = document.getElementById('featuresResultContent');
+            
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Predicting recovery time...</div>';
+            
+            try {
+                const res = await fetch('/api/recovery-time/' + (sessionStorage.getItem('userId') || '1'));
+                const data = await res.json();
+                
+                if (data.success) {
+                    contentDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div style="font-size: 48px;">
+                                    ${data.estimated_recovery_days === 0 ? '✅' : '⏱️'}
+                                </div>
+                                <h3>${data.estimated_recovery_days} days</h3>
+                            </div>
+                            <div class="col-md-8">
+                                <h6>⏱️ RECOVERY TIME PREDICTOR</h6>
+                                <p>Current Score: <strong>${data.current_score}</strong>/100 | Target: ${data.target_score}/100</p>
+                                <p>${data.message}</p>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: ${(data.current_score / data.target_score * 100)}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `<div class="alert alert-warning">${data.error}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error predicting recovery time</div>';
+            }
+        }
+
+        function storeUserId(id) {
+            sessionStorage.setItem('userId', id);
+        }
+    </script>
+</body>
+</html>
