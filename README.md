@@ -21,7 +21,7 @@ The ML-Based Smart Health Monitoring System is a web-based application developed
 * CSS
 * Bootstrap
 * Machine Learning
-* SQLite Database
+* MySQL Database
 
 ## Purpose of the Project
 
